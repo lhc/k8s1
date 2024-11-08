@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: prometheus-applicationset
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - cluster: "in-cluster"
+  template:
+    metadata:
+      name: prometheus
+    spec:
+      project: default
+      source:
+        repoURL: https://prometheus-community.github.io/helm-charts
+        targetRevision: 65.8.0
+        chart: kube-prometheus-stack
+        helm:
+          releaseName: prometheus
+          values: |
+            persistence:
+              enabled: true
+              size: 8Gi
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "700m"
+              limits:
+                memory: "1Gi"
+                cpu: "1"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: prometheus
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
